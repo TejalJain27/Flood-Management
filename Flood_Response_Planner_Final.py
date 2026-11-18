@@ -3,9 +3,7 @@ from pathlib import Path
 
 import pandas as pd
 import streamlit as st
-import folium
 import streamlit.components.v1 as components
-from folium.plugins import Fullscreen, MeasureControl
 
 st.set_page_config(page_title="Flood Response & Evacuation Planner", layout="wide")
 
@@ -174,86 +172,173 @@ else:
     node_lookup = {normalize_node_id(r["node_id"]): (float(r["latitude"]), float(r["longitude"])) for _, r in node_df.iterrows()}
     center = [float(node_df["latitude"].mean()), float(node_df["longitude"].mean())]
 
-    # OpenStreetMap standard tiles avoid the CARTO API-key watermark.
-    fmap = folium.Map(location=center, zoom_start=15, tiles="OpenStreetMap", control_scale=True, prefer_canvas=True)
-    Fullscreen(position="topleft").add_to(fmap)
-    MeasureControl(position="topleft", primary_length_unit="meters").add_to(fmap)
+    # Leaflet renders the same GeoJSON layers without requiring Folium.
+    # Leaflet is loaded in the browser; no extra Python package is needed.
     with open(roads_path, encoding="utf-8") as f:
         roads_geojson = json.load(f)
 
-    normal_roads, risk_roads = [], []
-    for feature in roads_geojson.get("features", []):
-        risk = int(feature.get("properties", {}).get("flood_risk", 0) or 0)
-        (risk_roads if risk else normal_roads).append(feature)
-
-    normal_layer = folium.FeatureGroup(name="Road network", show=True)
-    if normal_roads:
-        folium.GeoJson({"type": "FeatureCollection", "features": normal_roads},
-            style_function=lambda f: {"color": "#64748b", "weight": 1.6, "opacity": 0.8}).add_to(normal_layer)
-    normal_layer.add_to(fmap)
-
-    risk_layer = folium.FeatureGroup(name="Historical flood-risk roads", show=True)
-    if risk_roads:
-        folium.GeoJson({"type": "FeatureCollection", "features": risk_roads},
-            style_function=lambda f: {"color": "#f97316", "weight": 3.4, "opacity": 0.95},
-            tooltip="Road associated with historical flood records").add_to(risk_layer)
-    risk_layer.add_to(fmap)
-
+    flood_geojson = {"type": "FeatureCollection", "features": []}
     if flood_path.exists():
         with open(flood_path, encoding="utf-8") as f:
             flood_geojson = json.load(f)
-        flood_features = flood_geojson.get("features", [])
-        if flood_features:
-            fields = [x for x in ["F_ID", "DEPTH", "ZONE", "WARD"] if x in flood_features[0].get("properties", {})]
-            folium.GeoJson(flood_geojson, name="Historical flood locations",
-                marker=folium.CircleMarker(radius=5, color="#b91c1c", weight=1, fill=True, fill_color="#ef4444", fill_opacity=0.9),
-                tooltip=folium.GeoJsonTooltip(fields=fields) if fields else None).add_to(fmap)
 
+    route_coords = []
+    route_label = ""
     if paths_path.exists():
         with open(paths_path, encoding="utf-8") as f:
             route_records = json.load(f)
-        scenario_routes = [r for r in route_records if str(r.get("scenario_id")) == selected_scenario]
+        scenario_routes = [
+            r for r in route_records
+            if str(r.get("scenario_id")) == selected_scenario
+        ]
         if scenario_routes:
             policies = sorted({r.get("policy", "unknown") for r in scenario_routes})
             chosen_policy = st.selectbox("Route policy", policies)
-            policy_records = [r for r in scenario_routes if r.get("policy") == chosen_policy]
+            policy_records = [
+                r for r in scenario_routes if r.get("policy") == chosen_policy
+            ]
             episode_ids = sorted({int(r.get("episode", 1)) for r in policy_records})
             chosen_episode = st.selectbox("Route episode", episode_ids)
-            chosen = next(r for r in policy_records if int(r.get("episode", 1)) == chosen_episode)
+            chosen = next(
+                r for r in policy_records
+                if int(r.get("episode", 1)) == chosen_episode
+            )
             route_ids = [normalize_node_id(n) for n in chosen.get("path", [])]
             missing = [n for n in route_ids if n not in node_lookup]
             if missing:
-                st.error(f"{len(missing)} route nodes have no coordinates. Re-run Member 3 evaluation and Member 4 export from the same RL_graph.")
+                st.error(
+                    f"{len(missing)} route nodes have no coordinates. "
+                    "Re-run Member 3 evaluation and Member 4 export from the same RL_graph."
+                )
             elif len(route_ids) >= 2:
-                coords = [node_lookup[n] for n in route_ids]
-                route_color = "#2563eb" if chosen_policy == "dqn" else "#16a34a"
-                route_group = folium.FeatureGroup(name=f"Selected route: {chosen_policy}", show=True)
-                folium.PolyLine(coords, color=route_color, weight=7, opacity=0.95,
-                    tooltip=f"{chosen_policy} evacuation route | Episode {chosen_episode}").add_to(route_group)
-                stride = max(1, len(coords) // 35)
-                for point in coords[1:-1:stride]:
-                    folium.CircleMarker(point, radius=2.5, color=route_color, fill=True, fill_opacity=0.9).add_to(route_group)
-                folium.Marker(coords[0], tooltip="Evacuation origin", icon=folium.Icon(color="green", icon="play", prefix="fa")).add_to(route_group)
-                folium.Marker(coords[-1], tooltip="Evacuation destination", icon=folium.Icon(color="red", icon="flag", prefix="fa")).add_to(route_group)
-                route_group.add_to(fmap)
-                fmap.fit_bounds(coords, padding=(35, 35))
+                route_coords = [list(node_lookup[n]) for n in route_ids]
+                route_label = f"{chosen_policy} evacuation route | Episode {chosen_episode}"
                 if not selected_episodes.empty and {"policy", "episode"}.issubset(selected_episodes.columns):
-                    selected_row = selected_episodes[(selected_episodes["policy"] == chosen_policy) & (selected_episodes["episode"].astype(int) == chosen_episode)]
+                    selected_row = selected_episodes[
+                        (selected_episodes["policy"] == chosen_policy)
+                        & (selected_episodes["episode"].astype(int) == chosen_episode)
+                    ]
                     if not selected_row.empty:
                         s = selected_row.iloc[0]
                         c1, c2, c3 = st.columns(3)
-                        c1.metric("Route status", "Successful" if bool(s.get("success", False)) else "Not completed")
-                        c2.metric("Route length", f"{float(s['route_distance_m']):,.0f} m" if pd.notna(s.get("route_distance_m")) else "N/A")
-                        c3.metric("Flood-risk edges used", str(int(s["flood_edges_used"])) if pd.notna(s.get("flood_edges_used")) else "N/A")
+                        c1.metric(
+                            "Route status",
+                            "Successful" if bool(s.get("success", False)) else "Not completed",
+                        )
+                        c2.metric(
+                            "Route length",
+                            f"{float(s['route_distance_m']):,.0f} m"
+                            if pd.notna(s.get("route_distance_m")) else "N/A",
+                        )
+                        c3.metric(
+                            "Flood-risk edges used",
+                            str(int(s["flood_edges_used"]))
+                            if pd.notna(s.get("flood_edges_used")) else "N/A",
+                        )
             else:
                 st.info("No route with at least two nodes was recorded for this selection.")
         else:
             st.info("No route records exist for this scenario.")
 
-    legend = '<div style="position:fixed;bottom:24px;left:24px;z-index:9999;background:white;padding:9px 12px;border:1px solid #bbb;border-radius:6px;font-size:12px;color:#222;box-shadow:0 1px 5px rgba(0,0,0,.25)"><b>Map legend</b><br><span style="color:#64748b">━━</span> Roads<br><span style="color:#f97316">━━</span> Flood-risk roads<br><span style="color:#dc2626">●</span> Historical flood points<br><span style="color:#2563eb">━━</span> DQN route / <span style="color:#16a34a">━━</span> Safe reference</div>'
-    fmap.get_root().html.add_child(folium.Element(legend))
-    folium.LayerControl(collapsed=False).add_to(fmap)
-    components.html(fmap.get_root().render(), height=690, scrolling=False)
+    # Embed source GeoJSON and route coordinates safely as JSON data.
+    roads_json = json.dumps(roads_geojson).replace("</", "<\\/")
+    floods_json = json.dumps(flood_geojson).replace("</", "<\\/")
+    route_json = json.dumps(route_coords).replace("</", "<\\/")
+    route_text = json.dumps(route_label)
+
+    map_html = f"""
+    <!DOCTYPE html>
+    <html><head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+      <style>
+        html, body, #flood-map {{ height:100%; width:100%; margin:0; }}
+        .leaflet-container {{ font-family:Arial,sans-serif; }}
+        .map-legend {{
+          background:#fff; padding:10px 12px; border-radius:8px;
+          box-shadow:0 1px 8px #64748b66; color:#1e293b; line-height:1.7;
+          font-size:12px;
+        }}
+        .legend-line {{ display:inline-block; width:22px; border-top:4px solid; vertical-align:middle; margin-right:6px; }}
+      </style>
+    </head><body>
+      <div id="flood-map"></div>
+      <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+      <script>
+        const roads = {roads_json};
+        const floods = {floods_json};
+        const route = {route_json};
+        const routeLabel = {route_text};
+        const map = L.map('flood-map', {{preferCanvas:true}}).setView([{center[0]}, {center[1]}], 15);
+        L.tileLayer('https://{{s}}.tile.openstreetmap.org/{{z}}/{{x}}/{{y}}.png', {{
+          maxZoom:19, attribution:'&copy; OpenStreetMap contributors'
+        }}).addTo(map);
+
+        const normalFeatures = [];
+        const riskFeatures = [];
+        (roads.features || []).forEach(feature => {{
+          const risk = Number((feature.properties || {{}}).flood_risk || 0);
+          (risk ? riskFeatures : normalFeatures).push(feature);
+        }});
+        const normalLayer = L.geoJSON({{type:'FeatureCollection',features:normalFeatures}}, {{
+          style: {{color:'#64748b',weight:2,opacity:.85}}
+        }}).addTo(map);
+        const riskLayer = L.geoJSON({{type:'FeatureCollection',features:riskFeatures}}, {{
+          style: {{color:'#f97316',weight:4,opacity:.95}},
+          onEachFeature: (feature, layer) => layer.bindTooltip('Historical flood-risk road')
+        }}).addTo(map);
+
+        const floodLayer = L.geoJSON(floods, {{
+          pointToLayer: (feature, latlng) => L.circleMarker(latlng, {{
+            radius:6,color:'#991b1b',weight:1,fillColor:'#ef4444',fillOpacity:.9
+          }}),
+          onEachFeature: (feature, layer) => {{
+            const p = feature.properties || {{}};
+            const info = ['F_ID','DEPTH','ZONE','WARD']
+              .filter(k => p[k] !== undefined)
+              .map(k => `<b>${{k}}:</b> ${{p[k]}}`).join('<br>');
+            if (info) layer.bindPopup(info);
+          }}
+        }}).addTo(map);
+
+        const overlays = {{
+          'Road network': normalLayer,
+          'Flood-risk roads': riskLayer,
+          'Historical flood locations': floodLayer
+        }};
+        if (route.length >= 2) {{
+          const lineColor = routeLabel.toLowerCase().includes('dqn') ? '#2563eb' : '#16a34a';
+          const routeLayer = L.polyline(route, {{
+            color:lineColor,weight:7,opacity:.95
+          }}).bindTooltip(routeLabel).addTo(map);
+          L.circleMarker(route[0], {{
+            radius:8,color:'#166534',fillColor:'#22c55e',fillOpacity:1
+          }}).bindTooltip('Evacuation origin').addTo(map);
+          L.circleMarker(route[route.length-1], {{
+            radius:8,color:'#991b1b',fillColor:'#ef4444',fillOpacity:1
+          }}).bindTooltip('Evacuation destination').addTo(map);
+          overlays['Selected evacuation route'] = routeLayer;
+          map.fitBounds(routeLayer.getBounds(), {{padding:[30,30]}});
+        }}
+        L.control.layers(null, overlays, {{collapsed:false}}).addTo(map);
+        L.control.scale({{metric:true,imperial:false}}).addTo(map);
+        const legend = L.control({{position:'bottomleft'}});
+        legend.onAdd = function() {{
+          const div = L.DomUtil.create('div','map-legend');
+          div.innerHTML = '<b>Map legend</b><br>' +
+            '<span class="legend-line" style="border-color:#64748b"></span>Roads<br>' +
+            '<span class="legend-line" style="border-color:#f97316"></span>Flood-risk roads<br>' +
+            '<span style="color:#dc2626">●</span> Historical flood points<br>' +
+            '<span class="legend-line" style="border-color:#2563eb"></span>DQN route / ' +
+            '<span style="color:#16a34a">━━</span> Safe reference';
+          return div;
+        }};
+        legend.addTo(map);
+      </script>
+    </body></html>
+    """
+    components.html(map_html, height=690, scrolling=False)
 
 st.subheader("Episode results")
 if not selected_episodes.empty:
