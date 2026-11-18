@@ -132,6 +132,167 @@ st.markdown("""
         .policy-track { grid-column:1 / -1; grid-row:2; }
         .policy-value { grid-column:2; grid-row:1; }
     }
+
+    /* Dark canvas + bright, high-contrast flood dashboard palette */
+    :root {
+        color-scheme: dark;
+        --ink: #f4fbff;
+        --muted: #c4d8e8;
+        --line: #29465c;
+        --surface: #111c2b;
+    }
+    html, body, .stApp,
+    [data-testid="stAppViewContainer"],
+    [data-testid="stMain"],
+    [data-testid="stMainBlockContainer"] {
+        background: #05080f !important;
+        color: #f4fbff !important;
+    }
+    .block-container { background: transparent !important; }
+    /* Make all normal Streamlit text bright and readable. */
+    .stApp, .stApp p, .stApp span, .stApp label,
+    .stApp li, .stApp small,
+    .stApp [data-testid="stMarkdownContainer"],
+    .stApp [data-testid="stMarkdownContainer"] p,
+    .stApp [data-testid="stCaptionContainer"],
+    .stApp [data-testid="stCaptionContainer"] p,
+    .stApp [data-testid="stWidgetLabel"],
+    .stApp [data-testid="stWidgetLabel"] p {
+        color: #eaf6ff !important;
+        opacity: 1 !important;
+    }
+    .stApp h1, .stApp h2, .stApp h3, .stApp h4,
+    .stApp h5, .stApp h6,
+    h1, h2, h3, h4, h5, h6 {
+        color: #f8fcff !important;
+        font-weight: 780 !important;
+        text-shadow: none !important;
+    }
+    .stApp [data-testid="stCaptionContainer"],
+    .stApp [data-testid="stCaptionContainer"] p {
+        color: #b8d2e5 !important;
+    }
+    [data-testid="stSidebar"] {
+        background: #0b1421 !important;
+        border-right: 1px solid #29465c !important;
+    }
+    [data-testid="stSidebar"] * {
+        color: #f1f8ff !important;
+        opacity: 1 !important;
+    }
+    [data-testid="stSidebar"] h1,
+    [data-testid="stSidebar"] h2,
+    [data-testid="stSidebar"] h3 {
+        color: #ffffff !important;
+    }
+    /* Metrics are separate dark cards; numbers use luminous cyan. */
+    [data-testid="stMetric"] {
+        background: #111f30 !important;
+        border: 1px solid #31516a !important;
+        border-radius: 15px !important;
+        box-shadow: 0 6px 22px rgba(0,0,0,.28) !important;
+    }
+    [data-testid="stMetric"] *,
+    [data-testid="stMetric"] label,
+    [data-testid="stMetric"] [data-testid="stMetricLabel"],
+    [data-testid="stMetric"] [data-testid="stMetricValue"],
+    [data-testid="stMetric"] [data-testid="stMetricDelta"] {
+        opacity: 1 !important;
+    }
+    [data-testid="stMetric"] [data-testid="stMetricLabel"] {
+        color: #d4e7f5 !important;
+        font-weight: 700 !important;
+    }
+    [data-testid="stMetric"] [data-testid="stMetricValue"] {
+        color: #67e8f9 !important;
+        font-weight: 800 !important;
+    }
+    [data-testid="stMetric"] [data-testid="stMetricDelta"] {
+        color: #a7f3d0 !important;
+    }
+    /* Inputs and dropdown menus stay dark with bright text. */
+    [data-testid="stSelectbox"] label,
+    [data-testid="stMultiSelect"] label {
+        color: #eaf6ff !important;
+        font-weight: 700 !important;
+    }
+    [data-testid="stSelectbox"] div[data-baseweb="select"] > div,
+    [data-testid="stMultiSelect"] div[data-baseweb="select"] > div,
+    [data-baseweb="popover"] ul,
+    [data-baseweb="menu"] {
+        background: #142338 !important;
+        border-color: #42627c !important;
+        color: #f4fbff !important;
+    }
+    [data-baseweb="popover"] *,
+    [data-baseweb="menu"] * {
+        color: #f4fbff !important;
+    }
+    input, textarea {
+        background: #142338 !important;
+        color: #ffffff !important;
+        border-color: #42627c !important;
+    }
+    /* Hero remains colourful, with bright white/cyan text over the blue art. */
+    .flood-hero {
+        background: linear-gradient(118deg, #082f49 0%, #075985 52%, #0e7490 100%) !important;
+        border: 1px solid #1c7896 !important;
+        box-shadow: 0 12px 32px rgba(0,0,0,.4) !important;
+    }
+    .flood-hero h2,
+    .stApp .flood-hero h2 {
+        color: #ffffff !important;
+        text-shadow: 0 2px 10px rgba(0,0,0,.28) !important;
+    }
+    .flood-hero p,
+    .stApp .flood-hero p {
+        color: #e6faff !important;
+    }
+    .flood-hero .eyebrow,
+    .stApp .flood-hero .eyebrow {
+        color: #a5f3fc !important;
+    }
+    /* Comparison bars: bright fill on a dark track; labels remain outside bars. */
+    .policy-chart {
+        background: #111f30 !important;
+        border: 1px solid #31516a !important;
+        box-shadow: 0 6px 22px rgba(0,0,0,.28) !important;
+    }
+    .policy-chart-title { color: #ffffff !important; }
+    .policy-name { color: #eaf6ff !important; }
+    .policy-track {
+        background: #263b50 !important;
+        border: 1px solid #3a5870 !important;
+    }
+    .policy-fill {
+        background: linear-gradient(90deg, #06b6d4 0%, #22d3ee 55%, #a3e635 100%) !important;
+        box-shadow: 0 0 12px rgba(34,211,238,.22);
+    }
+    .policy-value { color: #ffffff !important; }
+    /* Tables, expanders, alerts and code blocks use dark readable surfaces. */
+    [data-testid="stDataFrame"],
+    [data-testid="stTable"],
+    [data-testid="stExpander"] {
+        background: #111f30 !important;
+        border-color: #31516a !important;
+        color: #f4fbff !important;
+    }
+    [data-testid="stDataFrame"] *,
+    [data-testid="stTable"] * {
+        color: #f4fbff !important;
+    }
+    [data-testid="stAlert"] {
+        background: #142338 !important;
+        color: #f4fbff !important;
+        border: 1px solid #42627c !important;
+    }
+    [data-testid="stCode"], pre, code {
+        background: #101b2a !important;
+        color: #d9f7ff !important;
+        border-color: #31516a !important;
+    }
+    hr { border-color: #29465c !important; }
+
 </style>
 <div class="flood-hero">
   <div class="eyebrow">Flood resilience • Chennai, India</div>
@@ -212,18 +373,67 @@ scenario_options = metrics["scenario_id"].dropna().astype(str).unique().tolist()
 labels = {}
 if not config.empty and {"scenario_id", "label"}.issubset(config.columns):
     labels = dict(zip(config["scenario_id"].astype(str), config["label"].astype(str)))
+
+def _as_success_flag(value):
+    """Parse exported bools safely; bool('False') must not count as success."""
+    if pd.isna(value):
+        return False
+    if isinstance(value, bool):
+        return value
+    text_value = str(value).strip().lower()
+    if text_value in {"true", "1", "yes", "success", "successful"}:
+        return True
+    if text_value in {"false", "0", "no", "failed", "unsuccessful", ""}:
+        return False
+    try:
+        return float(text_value) > 0
+    except (TypeError, ValueError):
+        return False
+
+def _measured_dqn_rate(scenario_id):
+    """Prefer the episode-level measured success fraction when available."""
+    if not episodes.empty and {"scenario_id", "policy", "success"}.issubset(episodes.columns):
+        episode_rows = episodes[
+            (episodes["scenario_id"].astype(str) == str(scenario_id))
+            & (episodes["policy"].astype(str).str.lower() == "dqn")
+        ]
+        if not episode_rows.empty:
+            return 100.0 * episode_rows["success"].map(_as_success_flag).mean()
+
+    metric_rows = metrics[
+        (metrics["scenario_id"].astype(str) == str(scenario_id))
+        & (metrics["policy"].astype(str).str.lower() == "dqn")
+    ]
+    if metric_rows.empty:
+        return None
+    value = pd.to_numeric(metric_rows.iloc[0]["success_rate_pct"], errors="coerce")
+    return float(value) if pd.notna(value) else None
+
+# Open on the scenario with the best ACTUAL exported DQN result, rather than
+# automatically selecting the first scenario (which may be a baseline).
+measured_rates = {sid: _measured_dqn_rate(sid) for sid in scenario_options}
+valid_rates = {sid: rate for sid, rate in measured_rates.items() if rate is not None}
+default_scenario = max(valid_rates, key=valid_rates.get) if valid_rates else scenario_options[0]
+
 st.sidebar.header("Dashboard controls")
-selected_scenario = st.sidebar.selectbox("Disaster scenario", scenario_options,
-    format_func=lambda value: f"{value} — {labels.get(value, value)}")
+selected_scenario = st.sidebar.selectbox(
+    "Disaster scenario",
+    scenario_options,
+    index=scenario_options.index(default_scenario),
+    format_func=lambda value: f"{value} — {labels.get(value, value)}",
+)
 selected_metrics = metrics[metrics["scenario_id"].astype(str) == selected_scenario].copy()
 selected_episodes = episodes[episodes["scenario_id"].astype(str) == selected_scenario].copy() if not episodes.empty else episodes
 
 st.subheader("Scenario performance")
-dqn_rows = selected_metrics[selected_metrics["policy"] == "dqn"]
+dqn_rows = selected_metrics[selected_metrics["policy"].astype(str).str.lower() == "dqn"]
 if not dqn_rows.empty:
     row = dqn_rows.iloc[0]
     k1, k2, k3, k4 = st.columns(4)
-    k1.metric("DQN success rate", f"{float(row['success_rate_pct']):.1f}%")
+    actual_rate = _measured_dqn_rate(selected_scenario)
+    k1.metric("DQN success rate", f"{actual_rate:.1f}%" if actual_rate is not None else "N/A")
+    if actual_rate == 0:
+        k1.caption("0% reflects the exported evaluation episodes; no successful DQN episodes were recorded for this scenario.")
     k2.metric("Mean route distance", f"{row['mean_distance_m']:.0f} m" if pd.notna(row.get("mean_distance_m")) else "N/A")
     k3.metric("Mean steps", f"{row['mean_steps']:.1f}" if pd.notna(row.get("mean_steps")) else "N/A")
     k4.metric("Mean flood-risk edges", f"{row['mean_flood_edges']:.1f}" if pd.notna(row.get("mean_flood_edges")) else "N/A")
