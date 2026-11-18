@@ -1,0 +1,5 @@
+scenario_id,label,description,affected_edge_fraction,closure_fraction,historical_risk_weight,severity
+S0_NORMAL,Normal / dry baseline,Low background disruption; establishes a reference condition.,0.02,0.0,1.0,low
+S1_LOCAL,Localized urban flooding,Short-duration ponding concentrated on historically flood-associated roads.,0.16,0.04,5.0,moderate
+S2_MONSOON,Severe monsoon inundation,Widespread road flooding with some roads impassable to evacuation traffic.,0.42,0.18,4.0,high
+S3_CORRIDOR,Evacuation-corridor disruption,Targeted disruption representing waterlogging/closure around a major route.,0.28,0.12,7.0,high

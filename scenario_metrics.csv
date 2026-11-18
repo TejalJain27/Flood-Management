@@ -1,0 +1,9 @@
+scenario_id,scenario_label,severity,policy,episodes,success_rate,mean_steps,mean_distance_m,mean_flood_edges,mean_reward,mean_compute_ms,disconnected_rate,affected_edges,closed_edges,success_rate_pct,disconnected_rate_pct
+S0_NORMAL,Normal / dry baseline,low,dqn,3,0.0,100.0,3695.609178429715,0.0,-113.33333333333333,12.12208166665126,0.0,14,0,0.0,0.0
+S0_NORMAL,Normal / dry baseline,low,safe_reference,3,1.0,23.666666666666668,2026.8361555350402,0.0,,1.6861393332874286,0.0,14,0,100.0,0.0
+S1_LOCAL,Localized urban flooding,moderate,dqn,3,0.0,100.0,3695.609178429715,33.0,-1096.6666666666667,10.990938666661046,0.0,115,29,0.0,0.0
+S1_LOCAL,Localized urban flooding,moderate,safe_reference,3,1.0,21.0,1577.4079645110414,0.6666666666666666,,0.8880899999894609,0.0,115,29,100.0,0.0
+S2_MONSOON,Severe monsoon inundation,high,dqn,3,0.0,33.333333333333336,4072.2367700114683,0.0,-100.0,3.427849999980026,0.6666666666666666,303,130,0.0,66.7
+S2_MONSOON,Severe monsoon inundation,high,safe_reference,3,0.3333333333333333,5.333333333333333,802.2171394657341,8.0,,0.1707766666640964,0.6666666666666666,303,130,33.3,66.7
+S3_CORRIDOR,Evacuation-corridor disruption,high,dqn,3,0.0,33.333333333333336,4072.2367700114683,100.0,-3100.0,3.4188960000089232,0.6666666666666666,202,87,0.0,66.7
+S3_CORRIDOR,Evacuation-corridor disruption,high,safe_reference,3,0.3333333333333333,11.333333333333334,2219.6883831465666,7.0,,0.420680000009573,0.6666666666666666,202,87,33.3,66.7

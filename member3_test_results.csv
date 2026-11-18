@@ -1,0 +1,8 @@
+test,passed,detail
+observation_shape,True,"Observed (5,)"
+observation_bounds,True,"All observation values must be normalized to [0, 1]."
+action_mask_matches_degree,True,Mask must expose exactly the available neighbor actions.
+invalid_action_penalty,True,"Invalid action should be safe, stationary, and penalized."
+scenario_reproducibility,True,Fixed seed gives identical overlays.
+closures_removed,True,All parallel edges for closed roads are absent.
+disconnected_pair_detected,True,Disconnected origin/destination pair is detected.

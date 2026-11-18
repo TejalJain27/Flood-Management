@@ -1,0 +1,25 @@
+scenario_id,scenario_label,severity,episode,policy,origin,destination,disconnected,affected_edges,closed_edges,success,steps,route_distance_m,flood_edges_used,total_reward,compute_ms,safe_fallback
+S0_NORMAL,Normal / dry baseline,low,1,dqn,11591529924,299878983,False,14,0,False,100,4797.622526626904,0.0,-120.0,14.832657999932053,
+S0_NORMAL,Normal / dry baseline,low,1,safe_reference,11591529924,299878983,False,14,0,True,26,1115.5273433593734,0.0,,1.0859999999865977,False
+S0_NORMAL,Normal / dry baseline,low,2,dqn,1457503240,3875696357,False,14,0,False,100,2216.9682386507734,0.0,-120.0,10.728829000072437,
+S0_NORMAL,Normal / dry baseline,low,2,safe_reference,1457503240,3875696357,False,14,0,True,19,2441.556686388767,0.0,,1.8777989998852718,False
+S0_NORMAL,Normal / dry baseline,low,3,dqn,299878883,300464877,False,14,0,False,100,4072.2367700114683,0.0,-100.0,10.804757999949288,
+S0_NORMAL,Normal / dry baseline,low,3,safe_reference,299878883,300464877,False,14,0,True,26,2523.4244368569803,0.0,,2.0946189999904163,False
+S1_LOCAL,Localized urban flooding,moderate,1,dqn,11591529924,299878983,False,115,29,False,100,4797.622526626904,0.0,-120.0,11.531228999956511,
+S1_LOCAL,Localized urban flooding,moderate,1,safe_reference,11591529924,299878983,False,115,29,True,30,1387.400354715055,0.0,,0.590829999964626,False
+S1_LOCAL,Localized urban flooding,moderate,2,dqn,1457503240,3875696357,False,115,29,False,100,2216.9682386507734,99.0,-3070.0,10.566318999963187,
+S1_LOCAL,Localized urban flooding,moderate,2,safe_reference,1457503240,3875696357,False,115,29,True,19,2441.556686388767,2.0,,1.5871399998559355,True
+S1_LOCAL,Localized urban flooding,moderate,3,dqn,299878883,300464877,False,115,29,False,100,4072.2367700114683,0.0,-100.0,10.875268000063443,
+S1_LOCAL,Localized urban flooding,moderate,3,safe_reference,299878883,300464877,False,115,29,True,14,903.2668524293018,0.0,,0.48630000014782127,False
+S2_MONSOON,Severe monsoon inundation,high,1,dqn,11591529924,299878983,True,303,130,False,0,,,,0.0,
+S2_MONSOON,Severe monsoon inundation,high,1,safe_reference,11591529924,299878983,True,303,130,False,0,,,,0.0,
+S2_MONSOON,Severe monsoon inundation,high,2,dqn,1457503240,3875696357,True,303,130,False,0,,,,0.0,
+S2_MONSOON,Severe monsoon inundation,high,2,safe_reference,1457503240,3875696357,True,303,130,False,0,,,,0.0,
+S2_MONSOON,Severe monsoon inundation,high,3,dqn,299878883,300464877,False,303,130,False,100,4072.2367700114683,0.0,-100.0,10.283549999940078,
+S2_MONSOON,Severe monsoon inundation,high,3,safe_reference,299878883,300464877,False,303,130,True,16,802.2171394657341,8.0,,0.5123299999922892,True
+S3_CORRIDOR,Evacuation-corridor disruption,high,1,dqn,11591529924,299878983,True,202,87,False,0,,,,0.0,
+S3_CORRIDOR,Evacuation-corridor disruption,high,1,safe_reference,11591529924,299878983,True,202,87,False,0,,,,0.0,
+S3_CORRIDOR,Evacuation-corridor disruption,high,2,dqn,1457503240,3875696357,True,202,87,False,0,,,,0.0,
+S3_CORRIDOR,Evacuation-corridor disruption,high,2,safe_reference,1457503240,3875696357,True,202,87,False,0,,,,0.0,
+S3_CORRIDOR,Evacuation-corridor disruption,high,3,dqn,299878883,300464877,False,202,87,False,100,4072.2367700114683,100.0,-3100.0,10.25668800002677,
+S3_CORRIDOR,Evacuation-corridor disruption,high,3,safe_reference,299878883,300464877,False,202,87,True,34,2219.6883831465666,7.0,,1.262040000028719,True
