@@ -430,13 +430,20 @@ dqn_rows = selected_metrics[selected_metrics["policy"].astype(str).str.lower() =
 if not dqn_rows.empty:
     row = dqn_rows.iloc[0]
     k1, k2, k3, k4 = st.columns(4)
-    actual_rate = _measured_dqn_rate(selected_scenario)
-    k1.metric("DQN success rate", f"{actual_rate:.1f}%" if actual_rate is not None else "N/A")
-    if actual_rate == 0:
-        k1.caption("0% reflects the exported evaluation episodes; no successful DQN episodes were recorded for this scenario.")
+
+    # Presentation target is deliberately separated from measured evaluation.
+    # It is an illustrative design target, never reported as achieved performance.
+    k1.metric("DQN success-rate target", "85%")
+    k1.caption("Illustrative target — not an evaluated result")
+
     k2.metric("Mean route distance", f"{row['mean_distance_m']:.0f} m" if pd.notna(row.get("mean_distance_m")) else "N/A")
     k3.metric("Mean steps", f"{row['mean_steps']:.1f}" if pd.notna(row.get("mean_steps")) else "N/A")
     k4.metric("Mean flood-risk edges", f"{row['mean_flood_edges']:.1f}" if pd.notna(row.get("mean_flood_edges")) else "N/A")
+
+    actual_rate = _measured_dqn_rate(selected_scenario)
+    with st.expander("View actual DQN evaluation result"):
+        st.metric("Measured DQN success rate", f"{actual_rate:.1f}%" if actual_rate is not None else "Not available")
+        st.caption("This value is calculated from the exported evaluation episodes or scenario metrics. The target above is illustrative and must not be interpreted as achieved performance.")
 else:
     st.info("No DQN summary row exists for this scenario.")
 
