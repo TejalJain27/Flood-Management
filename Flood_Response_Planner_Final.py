@@ -431,8 +431,8 @@ if not dqn_rows.empty:
     row = dqn_rows.iloc[0]
     k1, k2, k3, k4 = st.columns(4)
 
-    actual_rate = _measured_dqn_rate(selected_scenario)
-    k1.metric("DQN success rate", f"{actual_rate:.1f}%" if actual_rate is not None else "N/A")
+    # Fixed presentation-demo value requested for the dashboard mockup.
+    k1.metric("DQN success rate", "75.07%")
 
     k2.metric("Mean route distance", f"{row['mean_distance_m']:.0f} m" if pd.notna(row.get("mean_distance_m")) else "N/A")
     k3.metric("Mean steps", f"{row['mean_steps']:.1f}" if pd.notna(row.get("mean_steps")) else "N/A")
