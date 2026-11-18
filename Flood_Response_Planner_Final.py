@@ -1,4 +1,5 @@
 import json
+import html
 from pathlib import Path
 
 import pandas as pd
@@ -10,28 +11,127 @@ st.set_page_config(page_title="Flood Response & Evacuation Planner", layout="wid
 # Flood-response visual theme: self-contained CSS + SVG (no external image/API dependency).
 st.markdown("""
 <style>
-    .stApp { background: linear-gradient(180deg, #f2f8fc 0%, #ffffff 42%); }
-    [data-testid="stSidebar"] { background: linear-gradient(180deg, #e5f2fa 0%, #f4f9fc 100%); }
-    .block-container { padding-top: 1.5rem; }
-    h1, h2, h3 { color: #12344a; }
-    [data-testid="stMetric"] {
-        background: #ffffff; border: 1px solid #d8e8f1;
-        padding: 14px 16px; border-radius: 14px;
-        box-shadow: 0 4px 14px rgba(15, 64, 91, .06);
+    :root {
+        color-scheme: light;
+        --ink: #173247;
+        --muted: #526779;
+        --line: #d5e3ec;
+        --blue: #087ca7;
+        --blue-dark: #075985;
+        --surface: #ffffff;
     }
-    div[data-testid="stPlotlyChart"], div[data-testid="stDataFrame"] {
-        background: #ffffff; border-radius: 12px;
+    .stApp {
+        background: linear-gradient(180deg, #edf6fb 0%, #ffffff 340px) !important;
+        color: var(--ink) !important;
+    }
+    [data-testid="stAppViewContainer"], [data-testid="stMain"],
+    [data-testid="stMainBlockContainer"] {
+        background: transparent !important;
+        color: var(--ink) !important;
+    }
+    .block-container {
+        max-width: 1440px;
+        padding: 1.7rem clamp(1rem, 3vw, 2.8rem) 3rem !important;
+    }
+    /* Force readable foreground colors across Streamlit's inherited theme. */
+    .stApp, .stApp p, .stApp span, .stApp label,
+    .stApp [data-testid="stMarkdownContainer"],
+    .stApp [data-testid="stMarkdownContainer"] p,
+    .stApp [data-testid="stCaptionContainer"],
+    .stApp [data-testid="stCaptionContainer"] p,
+    .stApp [data-testid="stWidgetLabel"],
+    .stApp [data-testid="stWidgetLabel"] p {
+        color: var(--ink) !important;
+    }
+    h1, h2, h3, h4, h5, h6,
+    .stApp h1, .stApp h2, .stApp h3 {
+        color: #12344a !important;
+        font-weight: 750 !important;
+        letter-spacing: -.02em;
+    }
+    .stApp [data-testid="stCaptionContainer"],
+    .stApp [data-testid="stCaptionContainer"] p {
+        color: var(--muted) !important;
+    }
+    [data-testid="stSidebar"] {
+        background: linear-gradient(180deg, #e4f1f8 0%, #f5f9fc 100%) !important;
+        border-right: 1px solid #cbdde8;
+    }
+    [data-testid="stSidebar"] * {
+        color: #173247 !important;
+    }
+    [data-testid="stMetric"] {
+        background: #ffffff !important;
+        border: 1px solid #d4e5ef !important;
+        padding: 17px 18px !important;
+        border-radius: 15px !important;
+        box-shadow: 0 5px 18px rgba(15, 64, 91, .07) !important;
+        min-height: 112px;
+    }
+    [data-testid="stMetric"] label,
+    [data-testid="stMetric"] [data-testid="stMetricLabel"],
+    [data-testid="stMetric"] [data-testid="stMetricValue"],
+    [data-testid="stMetric"] [data-testid="stMetricDelta"] {
+        color: #173247 !important;
+        opacity: 1 !important;
+    }
+    [data-testid="stMetric"] [data-testid="stMetricLabel"] {
+        color: #526779 !important;
+        font-weight: 650 !important;
+    }
+    [data-testid="stMetric"] [data-testid="stMetricValue"] {
+        color: #075985 !important;
+        font-weight: 750 !important;
+    }
+    [data-testid="stSelectbox"] label,
+    [data-testid="stMultiSelect"] label {
+        color: #29475c !important;
+        font-weight: 650 !important;
+    }
+    [data-testid="stSelectbox"] div[data-baseweb="select"] > div {
+        background: #ffffff !important;
+        border-color: #b9cfdd !important;
+        color: #173247 !important;
+    }
+    [data-testid="stDataFrame"] {
+        border: 1px solid #d5e3ec;
+        border-radius: 12px;
+        overflow: hidden;
     }
     .flood-hero {
         background: linear-gradient(115deg, #082f49 0%, #075985 58%, #0e7490 100%);
-        border-radius: 18px; padding: 22px 26px; margin: 8px 0 22px;
-        color: white; box-shadow: 0 10px 26px rgba(8, 47, 73, .16);
+        border-radius: 20px;
+        padding: clamp(20px, 3vw, 30px) clamp(20px, 3.5vw, 36px);
+        margin: 8px 0 24px;
+        color: #ffffff !important;
+        box-shadow: 0 12px 30px rgba(8, 47, 73, .17);
         overflow: hidden;
     }
-    .flood-hero h2 { color: #ffffff; margin: 0 0 7px; font-size: 1.65rem; }
-    .flood-hero p { color: #d9f1fb; margin: 0; max-width: 680px; }
-    .flood-hero .eyebrow { color: #a5f3fc; text-transform: uppercase;
-        letter-spacing: .13em; font-size: .72rem; font-weight: 700; }
+    .flood-hero h2 { color: #ffffff !important; margin: 0 0 9px; font-size: clamp(1.45rem, 2.4vw, 2rem); }
+    .flood-hero p { color: #e4f5fc !important; margin: 0; max-width: 760px; line-height: 1.6; }
+    .flood-hero .eyebrow { color: #a5f3fc !important; text-transform: uppercase;
+        letter-spacing: .13em; font-size: .75rem; font-weight: 800; margin-bottom: 8px; }
+    .policy-chart {
+        background: #ffffff;
+        border: 1px solid #d5e3ec;
+        border-radius: 15px;
+        padding: 20px 22px;
+        box-shadow: 0 5px 18px rgba(15,64,91,.06);
+        margin: 8px 0 18px;
+    }
+    .policy-chart-title { color:#173247; font-weight:750; margin-bottom:16px; }
+    .policy-row { display:grid; grid-template-columns:minmax(110px, 170px) 1fr minmax(75px, 100px);
+        gap:12px; align-items:center; margin:13px 0; }
+    .policy-name { color:#29475c; font-weight:650; overflow-wrap:anywhere; }
+    .policy-track { height:17px; background:#e8f1f6; border-radius:99px; overflow:hidden; }
+    .policy-fill { height:100%; border-radius:99px; background:linear-gradient(90deg,#0e7490,#38bdf8); }
+    .policy-value { color:#12344a; font-weight:750; text-align:right; font-variant-numeric:tabular-nums; }
+    @media (max-width: 700px) {
+        .block-container { padding: 1rem .8rem 2rem !important; }
+        .policy-row { grid-template-columns: 1fr 75px; gap:7px; }
+        .policy-track { grid-column:1 / -1; grid-row:2; }
+        .policy-value { grid-column:2; grid-row:1; }
+    }
 </style>
 <div class="flood-hero">
   <div class="eyebrow">Flood resilience • Chennai, India</div>
@@ -134,19 +234,34 @@ st.subheader("DQN vs Safe Reference")
 available_metrics = [x for x in ["success_rate_pct", "mean_distance_m", "mean_steps", "mean_flood_edges", "mean_compute_ms"] if x in selected_metrics.columns]
 if available_metrics:
     compare_metric = st.selectbox("Comparison metric", available_metrics, format_func=lambda x: x.replace("_", " ").title())
-    # Use Streamlit's built-in chart to avoid a separate Plotly dependency.
-    # Keep the same live scenario_metrics data and selected comparison metric.
+    # Responsive, high-contrast comparison bars built from the original live metrics.
+    # This avoids a chart theme mismatch and does not alter any source values.
     comparison_chart = selected_metrics[["policy", compare_metric]].copy()
     comparison_chart[compare_metric] = pd.to_numeric(
         comparison_chart[compare_metric], errors="coerce"
     )
-    comparison_chart = comparison_chart.dropna().set_index("policy")
+    comparison_chart = comparison_chart.dropna()
     if not comparison_chart.empty:
-        st.bar_chart(
-            comparison_chart,
-            y=compare_metric,
-            use_container_width=True,
-            height=320,
+        max_value = max(abs(float(v)) for v in comparison_chart[compare_metric]) or 1.0
+        rows_html = []
+        for _, chart_row in comparison_chart.iterrows():
+            policy_label = html.escape(str(chart_row["policy"]).replace("_", " ").title())
+            value = float(chart_row[compare_metric])
+            width_pct = min(100.0, abs(value) / max_value * 100.0)
+            display_value = f"{value:,.1f}" if abs(value) < 1000 else f"{value:,.0f}"
+            rows_html.append(
+                '<div class="policy-row">'
+                f'<div class="policy-name">{policy_label}</div>'
+                f'<div class="policy-track"><div class="policy-fill" style="width:{width_pct:.2f}%"></div></div>'
+                f'<div class="policy-value">{display_value}</div>'
+                '</div>'
+            )
+        st.markdown(
+            '<div class="policy-chart">'
+            f'<div class="policy-chart-title">{html.escape(compare_metric.replace("_", " ").title())}</div>'
+            + "".join(rows_html)
+            + '</div>',
+            unsafe_allow_html=True,
         )
     else:
         st.info("No valid values are available for this comparison metric.")
