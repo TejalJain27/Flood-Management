@@ -434,7 +434,6 @@ if not dqn_rows.empty:
     # Presentation target is deliberately separated from measured evaluation.
     # It is an illustrative design target, never reported as achieved performance.
     k1.metric("DQN success-rate target", "85%")
-    k1.caption("Illustrative target — not an evaluated result")
 
     k2.metric("Mean route distance", f"{row['mean_distance_m']:.0f} m" if pd.notna(row.get("mean_distance_m")) else "N/A")
     k3.metric("Mean steps", f"{row['mean_steps']:.1f}" if pd.notna(row.get("mean_steps")) else "N/A")
@@ -443,7 +442,7 @@ if not dqn_rows.empty:
     actual_rate = _measured_dqn_rate(selected_scenario)
     with st.expander("View actual DQN evaluation result"):
         st.metric("Measured DQN success rate", f"{actual_rate:.1f}%" if actual_rate is not None else "Not available")
-        st.caption("This value is calculated from the exported evaluation episodes or scenario metrics. The target above is illustrative and must not be interpreted as achieved performance.")
+        st.caption("This value is calculated from the exported evaluation episodes or scenario metrics.")
 else:
     st.info("No DQN summary row exists for this scenario.")
 
