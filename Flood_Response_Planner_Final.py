@@ -2,7 +2,6 @@ import json
 from pathlib import Path
 
 import pandas as pd
-import plotly.express as px
 import streamlit as st
 import folium
 import streamlit.components.v1 as components
@@ -137,7 +136,22 @@ st.subheader("DQN vs Safe Reference")
 available_metrics = [x for x in ["success_rate_pct", "mean_distance_m", "mean_steps", "mean_flood_edges", "mean_compute_ms"] if x in selected_metrics.columns]
 if available_metrics:
     compare_metric = st.selectbox("Comparison metric", available_metrics, format_func=lambda x: x.replace("_", " ").title())
-    st.plotly_chart(px.bar(selected_metrics, x="policy", y=compare_metric, color="policy", barmode="group", title=compare_metric.replace("_", " ").title()), use_container_width=True)
+    # Use Streamlit's built-in chart to avoid a separate Plotly dependency.
+    # Keep the same live scenario_metrics data and selected comparison metric.
+    comparison_chart = selected_metrics[["policy", compare_metric]].copy()
+    comparison_chart[compare_metric] = pd.to_numeric(
+        comparison_chart[compare_metric], errors="coerce"
+    )
+    comparison_chart = comparison_chart.dropna().set_index("policy")
+    if not comparison_chart.empty:
+        st.bar_chart(
+            comparison_chart,
+            y=compare_metric,
+            use_container_width=True,
+            height=320,
+        )
+    else:
+        st.info("No valid values are available for this comparison metric.")
 
 st.subheader("Evacuation map")
 nodes_path = DATA / "road_nodes.csv"
