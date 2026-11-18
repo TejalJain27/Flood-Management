@@ -320,6 +320,17 @@ st.markdown("""
 """, unsafe_allow_html=True)
 st.caption("Scenario-based decision-support prototype | Velachery, Chennai")
 
+with st.expander("How to use this dashboard", expanded=False):
+    st.markdown(
+        """
+        - **Choose a disaster scenario** from the sidebar to update the metrics and route data.
+        - **Compare policies** using the comparison selector.
+        - **Explore the evacuation map** by switching road, flood and route layers on or off.
+        - **Select a route policy and episode** to inspect a particular recorded path.
+        - **Filter and download episode results** in the results section.
+        """
+    )
+
 # Locate generated evaluation files in common deployment layouts.
 APP_DIR = Path(__file__).resolve().parent
 DATA_CANDIDATES = [
@@ -439,6 +450,30 @@ if not dqn_rows.empty:
     k4.metric("Mean flood-risk edges", f"{row['mean_flood_edges']:.1f}" if pd.notna(row.get("mean_flood_edges")) else "N/A")
 else:
     st.info("No DQN summary row exists for this scenario.")
+
+st.markdown("#### Quick downloads")
+download_cols = st.columns(2)
+download_cols[0].download_button(
+    "Download scenario metrics",
+    data=selected_metrics.to_csv(index=False).encode("utf-8"),
+    file_name=f"{selected_scenario}_scenario_metrics.csv",
+    mime="text/csv",
+    use_container_width=True,
+)
+if not selected_episodes.empty:
+    download_cols[1].download_button(
+        "Download episode results",
+        data=selected_episodes.to_csv(index=False).encode("utf-8"),
+        file_name=f"{selected_scenario}_episode_results.csv",
+        mime="text/csv",
+        use_container_width=True,
+    )
+else:
+    download_cols[1].button(
+        "Episode export unavailable",
+        disabled=True,
+        use_container_width=True,
+    )
 
 st.subheader("DQN vs Safe Reference")
 available_metrics = [x for x in ["success_rate_pct", "mean_distance_m", "mean_steps", "mean_flood_edges", "mean_compute_ms"] if x in selected_metrics.columns]
@@ -667,7 +702,50 @@ else:
 
 st.subheader("Episode results")
 if not selected_episodes.empty:
-    st.dataframe(selected_episodes, use_container_width=True, hide_index=True)
+    filtered_episodes = selected_episodes.copy()
+    filter_cols = st.columns([1, 1, 1.5])
+    if "policy" in filtered_episodes.columns:
+        policy_values = sorted(filtered_episodes["policy"].dropna().astype(str).unique().tolist())
+        chosen_policies = filter_cols[0].multiselect(
+            "Filter by policy",
+            options=policy_values,
+            default=policy_values,
+            help="Choose one or more policies to show.",
+        )
+        filtered_episodes = filtered_episodes[
+            filtered_episodes["policy"].astype(str).isin(chosen_policies)
+        ]
+    if "success" in filtered_episodes.columns:
+        status_choice = filter_cols[1].selectbox(
+            "Route outcome",
+            ["All outcomes", "Successful only", "Unsuccessful only"],
+        )
+        if status_choice == "Successful only":
+            filtered_episodes = filtered_episodes[
+                filtered_episodes["success"].map(_as_success_flag)
+            ]
+        elif status_choice == "Unsuccessful only":
+            filtered_episodes = filtered_episodes[
+                ~filtered_episodes["success"].map(_as_success_flag)
+            ]
+    search_text = filter_cols[2].text_input(
+        "Search episode results",
+        placeholder="Search episode, policy, distance...",
+    )
+    if search_text.strip():
+        searchable = filtered_episodes.astype(str).apply(
+            lambda column: column.str.contains(search_text.strip(), case=False, na=False)
+        ).any(axis=1)
+        filtered_episodes = filtered_episodes[searchable]
+
+    st.caption(f"Showing {len(filtered_episodes)} of {len(selected_episodes)} episode records.")
+    st.dataframe(filtered_episodes, use_container_width=True, hide_index=True)
+    st.download_button(
+        "Download filtered results",
+        data=filtered_episodes.to_csv(index=False).encode("utf-8"),
+        file_name=f"{selected_scenario}_filtered_episode_results.csv",
+        mime="text/csv",
+    )
 else:
     st.info("No episode-level results are available for this scenario.")
 with st.expander("Scenario assumptions"):
@@ -675,4 +753,114 @@ with st.expander("Scenario assumptions"):
         st.dataframe(config[config["scenario_id"].astype(str) == selected_scenario], use_container_width=True, hide_index=True)
     else:
         st.info("Scenario configuration file not found.")
+
+st.divider()
+st.header("Community Emergency Support")
+st.caption("Quick access to emergency services and practical flood-response guidance.")
+
+# National emergency contacts. Numbers are sourced from official Government of India pages.
+st.subheader("Emergency helplines")
+helpline_cols = st.columns(4)
+helplines = [
+    ("112", "All-in-one emergency", "Police, fire, health and disaster response"),
+    ("102", "Ambulance", "National ambulance service"),
+    ("101", "Fire & rescue", "Fire and rescue assistance"),
+    ("1070", "Disaster relief", "Relief Commissioner for natural calamities"),
+]
+for col, (number, service, detail) in zip(helpline_cols, helplines):
+    with col:
+        st.markdown(
+            f"""
+            <div style="background:#112337;border:1px solid #31516a;border-radius:14px;
+                        padding:16px;min-height:145px;">
+              <div style="color:#67e8f9;font-size:1.8rem;font-weight:800;">{number}</div>
+              <div style="color:#f4fbff;font-weight:750;margin:5px 0;">{service}</div>
+              <div style="color:#c4d8e8;font-size:.86rem;">{detail}</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        st.markdown(f"[Call {number}](tel:{number})")
+
+st.caption("Helpline availability and routing can vary by state. If one number does not connect, try 112 for an emergency.")
+st.markdown(
+    "Official references: [Government of India helpline directory](https://www.india.gov.in/directory/helpline) · "
+    "[Ministry of Home Affairs – ERSS 112](https://www.mha.gov.in/emergency-response-support-system-erss)"
+)
+
+st.subheader("Find nearby relief shelters")
+st.info(
+    "The project data currently does not contain a verified shelter directory or live bed-capacity feed. "
+    "Use the map search below to locate possible nearby relief centres, then call local authorities "
+    "to confirm that the centre is open, accessible and accepting people."
+)
+st.link_button(
+    "Search relief shelters near Velachery, Chennai",
+    "https://www.google.com/maps/search/relief+shelters+near+Velachery+Chennai/",
+    use_container_width=True,
+)
+st.warning(
+    "Do not enter floodwater on foot or by vehicle. Follow official evacuation instructions, "
+    "avoid downed power lines, and do not assume a mapped place is an active shelter."
+)
+
+st.subheader("Shelter readiness checklist")
+checklist_items = [
+    "Carry drinking water and ready-to-eat food",
+    "Pack essential medicines and a basic first-aid kit",
+    "Keep ID cards, cash and important documents in a waterproof pouch",
+    "Carry a charged phone, power bank and torch",
+    "Pack clothes, hygiene supplies and baby or elderly-care essentials if needed",
+    "Share your destination and contact details with a family member",
+]
+checked_items = []
+for item in checklist_items:
+    if st.checkbox(item, key="shelter_check_" + str(checklist_items.index(item))):
+        checked_items.append(item)
+st.caption(f"{len(checked_items)} of {len(checklist_items)} preparation items checked.")
+
+checklist_text = "FLOOD SHELTER READINESS CHECKLIST\n\n" + "\n".join(
+    [("[x] " if item in checked_items else "[ ] ") + item for item in checklist_items]
+)
+st.download_button(
+    "Download shelter checklist",
+    data=checklist_text,
+    file_name="flood_shelter_readiness_checklist.txt",
+    mime="text/plain",
+)
+
+st.subheader("Request / record community assistance")
+with st.form("community_assistance_form"):
+    request_type = st.selectbox(
+        "Type of assistance",
+        ["Shelter information", "Medical assistance", "Food and drinking water",
+         "Rescue support", "Elderly / child assistance", "Other"],
+    )
+    request_area = st.text_input("Area / landmark", placeholder="e.g. Velachery, Chennai")
+    request_details = st.text_area(
+        "Details (do not enter passwords or sensitive identity numbers)",
+        placeholder="Briefly describe the help needed",
+    )
+    submitted = st.form_submit_button("Prepare assistance note")
+if submitted:
+    if not request_area.strip() or not request_details.strip():
+        st.warning("Please enter the area and a short description.")
+    else:
+        note = (
+            "COMMUNITY ASSISTANCE NOTE\n"
+            f"Assistance: {request_type}\n"
+            f"Area: {request_area.strip()}\n"
+            f"Details: {request_details.strip()}\n\n"
+            "This note is not sent automatically. Share it with the appropriate local authority "
+            "or emergency service. For immediate danger in India, call 112."
+        )
+        st.success("Your note is ready. It has not been sent to emergency services.")
+        st.download_button(
+            "Download assistance note",
+            data=note,
+            file_name="community_assistance_note.txt",
+            mime="text/plain",
+        )
+
+
 st.caption("Prototype for scenario-based analysis; not a real-world emergency dispatch system. Live road closures, shelter capacity and resource inventories are not included in the supplied data.")
